@@ -19,7 +19,8 @@ namespace MinimalAPICatalogo.Context
             // usar os metodos da fluentapi para configurar as propriedades das entitidades
             // e explicitar o relacionamento 1 para muitos
 
-            modelBuilder.Entity<Categoria>().HasKey(c => c.CategoriaId);
+            modelBuilder.Entity<Categoria>().HasKey(c => c.CategoriaId); //Para a tabela categoria, categoriaID é usado como chave primária
+            //Definição das colunas
             modelBuilder.Entity<Categoria>().Property(c => c.Nome).HasMaxLength(100).IsRequired();
             modelBuilder.Entity<Categoria>().Property(c => c.Descricao).HasMaxLength(150).IsRequired();
 
@@ -33,9 +34,9 @@ namespace MinimalAPICatalogo.Context
             //relacionamento categoria-produto
 
             modelBuilder.Entity<Produto>()
-                .HasOne<Categoria>(c => c.Categoria)
-                .WithMany(p => p.Produtos)
-                .HasForeignKey(y => y.CategoriaID);
+                .HasOne<Categoria>(c => c.Categoria) //metodo HasOne -  especifica um lado do relacionamento
+                .WithMany(p => p.Produtos)   //metodo WithMany - define que a propriedade tem um relacionamento tipo muitos
+                .HasForeignKey(y => y.CategoriaID); // definido a chave estrangeira do produto
         }
     }
 }

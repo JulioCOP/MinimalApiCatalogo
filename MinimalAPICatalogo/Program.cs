@@ -1,6 +1,11 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using MinimalAPICatalogo.Context;
 using MinimalAPICatalogo.Models;
+using MinimalAPICatalogo.Services;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,12 +24,60 @@ builder.Services.AddDbContext<AppDbContext>(options =>
                                             options.UseMySql(connectionString, 
                                             ServerVersion.AutoDetect(connectionString)));
 
+// registro do serviço de geração do token
+builder.Services.AddSingleton<ITokenService>(new TokenService());
+
+//validação do token
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+    };
+});
+builder.Services.AddAuthentication();
+
+
 var app = builder.Build(); // Em caso de inclusão no container dever ser antes do comando build
+
+
+// endpoint para login
+
+app.MapPost("/login", [AllowAnonymous] (UserModel userModel, ITokenService tokenService) =>
+{
+    if (userModel == null)
+    {
+        return Results.BadRequest("Login INVÁLIDO!");
+    }
+    if (userModel.UserName == "macoratti" && userModel.Password == "numsey#123")
+    {
+        var tokenString = tokenService.GerarToken(app.Configuration["Jwt:Key"],
+           app.Configuration["Jwt:Issuer"],
+           app.Configuration["Jwt:Audience"],
+           userModel);
+        return Results.Ok(new { token = tokenString });
+    }
+    else
+    {
+        return Results.BadRequest("Login INVÁLIDO!");
+    }
+}).Produces(StatusCodes.Status400BadRequest)
+              .Produces(StatusCodes.Status200OK)
+              .WithName("Login")
+              .WithTags("Autenticacao");
+
 
 
 //Definir os endpoints categoria
 
-app.MapGet("/", () => "Catalogo de Produtos - 2023");
+app.MapGet("/", () => "Catalogo de Produtos - 2023").ExcludeFromDescription();
                                                        //injeção de dependência do contexto do banco de dados
 app.MapPost("/categorias", async (Categoria categoria, AppDbContext db) =>
 {                                // dados da categoria
@@ -35,7 +88,8 @@ app.MapPost("/categorias", async (Categoria categoria, AppDbContext db) =>
 });
 
 // Retornar uma lista de categorias
-app.MapGet("/categorias", async (AppDbContext db) => await db.Categorias.ToListAsync());
+app.MapGet("/categorias", async (AppDbContext db) => 
+    await db.Categorias.ToListAsync()).RequireAuthorization();
 
 // Retornar uma unica categoria
 
@@ -86,7 +140,8 @@ app.MapPost("/produtos", async (Produto produto, AppDbContext db) =>
 });
 
 //retornar lista de produtos
-app.MapGet("/produtos", async (AppDbContext db) => await db.Produtos.ToListAsync());
+app.MapGet("/produtos", async (AppDbContext db) => 
+    await db.Produtos.ToListAsync()).RequireAuthorization();
 
 // Retornar um unico produto
 
@@ -138,6 +193,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+//ativar os serviços de autorização e autenticação
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.Run();
 

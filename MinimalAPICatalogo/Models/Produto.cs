@@ -1,4 +1,6 @@
-﻿namespace MinimalAPICatalogo.Models
+﻿using System.Text.Json.Serialization;
+
+namespace MinimalAPICatalogo.Models
 {
     public class Produto
     {
@@ -14,6 +16,8 @@
 
         //propriedades de navegação, para reforçar o relacionamento entre categoria-produto
         public int CategoriaID { get; set; } //cria na tabela produtos, uma coluna categoriaid
+
+        [JsonIgnore]
         public Categoria? Categoria { get;set; }
     }
 }

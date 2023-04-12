@@ -21,7 +21,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 var app = builder.Build(); // Em caso de inclusão no container dever ser antes do comando build
 
-//Definir os endpoints
+
+//Definir os endpoints categoria
+
 app.MapGet("/", () => "Catalogo de Produtos - 2023");
                                                        //injeção de dependência do contexto do banco de dados
 app.MapPost("/categorias", async (Categoria categoria, AppDbContext db) =>
@@ -68,6 +70,63 @@ app.MapDelete("/categorias/{id:int}", async (int id, AppDbContext db) =>
     }
 
     db.Categorias.Remove(categoria);
+    await db.SaveChangesAsync();
+
+    return Results.NoContent();
+});
+
+//endpoints para produtos
+
+app.MapPost("/produtos", async (Produto produto, AppDbContext db) =>
+{
+    db.Produtos.Add(produto);
+    await db.SaveChangesAsync();
+
+    return Results.Created($"/produtos/{produto.ProdutoId}", produto);
+});
+
+//retornar lista de produtos
+app.MapGet("/produtos", async (AppDbContext db) => await db.Produtos.ToListAsync());
+
+// Retornar um unico produto
+
+app.MapGet("/produtos/{id:int}", async (int id, AppDbContext db) =>
+{
+    return await db.Produtos.FindAsync(id)
+    is Produto produto ? Results.Ok(produto) : Results.NotFound();
+});
+
+//Atualizar ou alterar um produto
+app.MapPut("/produtos/{id:int}", async (int id, Produto produto, AppDbContext db) =>
+{
+    if (produto.ProdutoId != id)
+    {
+        return Results.BadRequest();
+    }
+    var produtoDB = await db.Produtos.FindAsync(id);
+    if (produtoDB is null) return Results.NotFound();
+    produtoDB.Nome = produto.Nome;
+    produtoDB.Descricao = produto.Descricao;
+    produtoDB.Preco = produto.Preco;
+    produtoDB.Imagem = produto.Imagem;
+    produtoDB.DataCompra = produto.DataCompra;
+    produtoDB.Estoque = produto.Estoque;
+    produtoDB.ProdutoId = produto.ProdutoId;
+
+    await db.SaveChangesAsync();
+    return Results.Ok(produtoDB);
+});
+
+// Deletar um produto
+app.MapDelete("/produtos/{id:int}", async (int id, AppDbContext db) =>
+{
+    var produto = await db.Produtos.FindAsync(id);
+    if (produto is null)
+    {
+        return Results.NotFound("PRODUTO NÃO ENCONTRADO!");
+    }
+
+    db.Produtos.Remove(produto);
     await db.SaveChangesAsync();
 
     return Results.NoContent();

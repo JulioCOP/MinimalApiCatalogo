@@ -12,7 +12,7 @@ public class TokenService : ITokenService
     //classe que implementa a geração do token
     public string GerarToken(string key, string issuer, string audience, UserModel user)
     {
-        var claims = new[] //declarações que compões o playload do usuário
+        var claims = new[] //declarações que compõe o playload do usuário
         {
             new Claim(ClaimTypes.Name, user.UserName),
             new Claim(ClaimTypes.NameIdentifier,Guid.NewGuid().ToString())

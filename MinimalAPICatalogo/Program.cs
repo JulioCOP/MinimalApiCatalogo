@@ -42,7 +42,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
     };
 });
-builder.Services.AddAuthentication();
+builder.Services.AddAuthorization();
 
 
 var app = builder.Build(); // Em caso de inclusão no container dever ser antes do comando build
@@ -54,7 +54,7 @@ app.MapPost("/login", [AllowAnonymous] (UserModel userModel, ITokenService token
 {
     if (userModel == null)
     {
-        return Results.BadRequest("Login INVÁLIDO!");
+        return Results.BadRequest("Credencial INVÁLIDO!");
     }
     if (userModel.UserName == "macoratti" && userModel.Password == "numsey#123")
     {
@@ -66,7 +66,7 @@ app.MapPost("/login", [AllowAnonymous] (UserModel userModel, ITokenService token
     }
     else
     {
-        return Results.BadRequest("Login INVÁLIDO!");
+        return Results.BadRequest("Credencial INVÁLIDO!");
     }
 }).Produces(StatusCodes.Status400BadRequest)
               .Produces(StatusCodes.Status200OK)

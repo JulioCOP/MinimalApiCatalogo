@@ -89,7 +89,7 @@ app.MapPost("/categorias", async (Categoria categoria, AppDbContext db) =>
 
 // Retornar uma lista de categorias
 app.MapGet("/categorias", async (AppDbContext db) => 
-    await db.Categorias.ToListAsync()).RequireAuthorization();
+    await db.Categorias.ToListAsync()).WithTags("Categorias").RequireAuthorization();
 
 // Retornar uma unica categoria
 
@@ -141,7 +141,7 @@ app.MapPost("/produtos", async (Produto produto, AppDbContext db) =>
 
 //retornar lista de produtos
 app.MapGet("/produtos", async (AppDbContext db) => 
-    await db.Produtos.ToListAsync()).RequireAuthorization();
+    await db.Produtos.ToListAsync()).WithTags("Produtos").RequireAuthorization();
 
 // Retornar um unico produto
 
